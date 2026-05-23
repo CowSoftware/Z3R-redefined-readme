@@ -20,6 +20,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libsdl2-dev
       - name: Build
+        env:
+          CFLAGS: "-O2"
         run: make -j$(nproc) zelda3
       - name: Package
         run: |
@@ -73,6 +75,8 @@ jobs:
             mingw-w64-x86_64-SDL2
             mingw-w64-x86_64-pkg-config
       - name: Build
+        env:
+          CFLAGS: "-O2"
         run: make -j$(nproc) zelda3
       - name: Package
         run: |
