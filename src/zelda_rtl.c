@@ -524,7 +524,13 @@ void ZeldaDrawPpuFrame(uint8 *pixel_buffer, size_t pitch, uint32 render_flags) {
       g_config.extended_aspect_ratio != 0 &&
       Zelda_ShouldRenderWideHudOverlay();
 
-  PpuSetRenderWideHud(g_zenv.ppu, render_wide_hud, Hud_GetWideHudTilemap(),
+  bool anchor_wide_hud_bg3 =
+      render_wide_hud && main_module_index != 14 ||
+      (enhanced_features0 & (kFeatures0_ExtendScreen64 | kFeatures0_RearrangeHud)) ==
+          (kFeatures0_ExtendScreen64 | kFeatures0_RearrangeHud) &&
+      g_config.extended_aspect_ratio != 0 &&
+      main_module_index == 14 && (submodule_index == 1 || submodule_index == 12);
+  PpuSetRenderWideHud(g_zenv.ppu, render_wide_hud, anchor_wide_hud_bg3, Hud_GetWideHudTilemap(),
                       render_wide_hud ? g_config.hud_shadow_size : 0);
   PpuBeginDrawing(g_zenv.ppu, pixel_buffer, pitch, render_flags);
 

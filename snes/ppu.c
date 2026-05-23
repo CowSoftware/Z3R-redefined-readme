@@ -704,7 +704,8 @@ static void PpuDrawBackground_4bpp(Ppu *ppu, uint y, bool sub, uint layer, PpuZb
   int tileadr = ppu->bgLayer[layer].tileAdr, pixel;
   int tileadr1 = tileadr + 7 - (y & 0x7), tileadr0 = tileadr + (y & 0x7);
   const uint16 *addr;
-  int fixed_layer_offset = (layer == 2) ? ppu->viewportLeftCur + (ppu->extraLeftRight >> 1) - ppu->extraLeftRight : 0;
+  int fixed_layer_offset = (layer == 2 && ppu->anchorWideHudBg3) ?
+      ppu->viewportLeftCur + (ppu->extraLeftRight >> 1) - ppu->extraLeftRight : 0;
   for (size_t windex = 0; windex < win.nr; windex++) {
     if (win.bits & (1 << windex))
       continue;  // layer is disabled for this window part
@@ -818,7 +819,8 @@ static void PpuDrawBackground_2bpp(Ppu *ppu, uint y, bool sub, uint layer, PpuZb
   int tileadr1 = tileadr + 7 - (y & 0x7), tileadr0 = tileadr + (y & 0x7);
 
   const uint16 *addr;
-  int fixed_layer_offset = (layer == 2) ? ppu->viewportLeftCur + (ppu->extraLeftRight >> 1) - ppu->extraLeftRight : 0;
+  int fixed_layer_offset = (layer == 2 && ppu->anchorWideHudBg3) ?
+      ppu->viewportLeftCur + (ppu->extraLeftRight >> 1) - ppu->extraLeftRight : 0;
   for (size_t windex = 0; windex < win.nr; windex++) {
     if (win.bits & (1 << windex))
       continue;  // layer is disabled for this window part
@@ -936,7 +938,8 @@ static void PpuDrawBackground_4bpp_mosaic(Ppu *ppu, uint y, bool sub, uint layer
   int tileadr = ppu->bgLayer[layer].tileAdr, pixel;
   int tileadr1 = tileadr + 7 - (y & 0x7), tileadr0 = tileadr + (y & 0x7);
   const uint16 *addr;
-  int fixed_layer_offset = (layer == 2) ? ppu->viewportLeftCur + (ppu->extraLeftRight >> 1) - ppu->extraLeftRight : 0;
+  int fixed_layer_offset = (layer == 2 && ppu->anchorWideHudBg3) ?
+      ppu->viewportLeftCur + (ppu->extraLeftRight >> 1) - ppu->extraLeftRight : 0;
   for (size_t windex = 0; windex < win.nr; windex++) {
     if (win.bits & (1 << windex))
       continue;  // layer is disabled for this window part
@@ -1003,7 +1006,8 @@ static void PpuDrawBackground_2bpp_mosaic(Ppu *ppu, int y, bool sub, uint layer,
   int tileadr = ppu->bgLayer[layer].tileAdr, pixel;
   int tileadr1 = tileadr + 7 - (y & 0x7), tileadr0 = tileadr + (y & 0x7);
   const uint16 *addr;
-  int fixed_layer_offset = (layer == 2) ? ppu->viewportLeftCur + (ppu->extraLeftRight >> 1) - ppu->extraLeftRight : 0;
+  int fixed_layer_offset = (layer == 2 && ppu->anchorWideHudBg3) ?
+      ppu->viewportLeftCur + (ppu->extraLeftRight >> 1) - ppu->extraLeftRight : 0;
   for (size_t windex = 0; windex < win.nr; windex++) {
     if (win.bits & (1 << windex))
       continue;  // layer is disabled for this window part
@@ -1262,8 +1266,9 @@ void PpuSetExtraSideSpace(Ppu *ppu, int left, int right, int bottom) {
       ppu->extraLeftRight - ppu->extraLeftCur : ppu->extraLeftRight - target_extra;
 }
 
-void PpuSetRenderWideHud(Ppu *ppu, bool enabled, const uint16_t *tilemap, uint8_t shadow_size) {
+void PpuSetRenderWideHud(Ppu *ppu, bool enabled, bool anchor_bg3, const uint16_t *tilemap, uint8_t shadow_size) {
   ppu->renderWideHud = enabled;
+  ppu->anchorWideHudBg3 = anchor_bg3;
   ppu->wideHudTilemap = tilemap;
   ppu->wideHudShadowSize = shadow_size;
 }
@@ -1273,6 +1278,8 @@ static int PpuGetWideHudPixel(Ppu *ppu, uint bg_x, uint bg_y) {
     return 0;
   BgLayer *bglayer = &ppu->bgLayer[2];
   uint32 tile = ppu->wideHudTilemap[UintMin(bg_y >> 3, 29) * 64 + ((bg_x >> 3) & 63)];
+  if ((tile & 0x3ff) == 0x7f)
+    return 0;
   int tileadr0 = bglayer->tileAdr + (bg_y & 7);
   int tileadr1 = bglayer->tileAdr + 7 - (bg_y & 7);
   int tileadr = (tile & 0x8000) ? tileadr1 : tileadr0;
@@ -1313,11 +1320,14 @@ static void PpuDrawWideHudOverlay(Ppu *ppu, uint y, uint32 *dst_org) {
   int tileadr0 = bglayer->tileAdr + (bg_y & 7);
   int tileadr1 = bglayer->tileAdr + 7 - (bg_y & 7);
   int width = 256 + target_extra * 2;
-  uint32 *dst = dst_org + ppu->viewportLeftCur;
+  int output_x = ppu->viewportLeftCur;
+  uint32 *dst = dst_org + output_x;
 
   for (int out_x = 0; out_x < width; out_x++) {
     uint bg_x = out_x;
     uint32 tile = ppu->wideHudTilemap[UintMin(bg_y >> 3, 29) * 64 + ((bg_x >> 3) & 63)];
+    if ((tile & 0x3ff) == 0x7f)
+      continue;
     int tileadr = (tile & 0x8000) ? tileadr1 : tileadr0;
     uint32 bits = ppu->vram[(tileadr + (tile & 0x3ff) * 8) & 0x7fff];
     int bit = bg_x & 7;

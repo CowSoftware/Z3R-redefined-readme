@@ -253,6 +253,7 @@ static bool Overworld_ShouldUseOpenWorldTransitions() {
 }
 
 static void Overworld_FinishScrollTransitionInstantly();
+static void Overworld_FinishInstantSpriteGfxUpload();
 static void Overworld_RebuildScreenForInstantTransition();
 /* GetMap8toTileAttr / GetMap16toMap8Table — Trivial accessors that
  * expose the compiled-in conversion tables. Encapsulated as functions
@@ -1331,10 +1332,24 @@ static void Overworld_FinishScrollTransitionInstantly() {
   sound_effect_ambient = m >> 4;
   if (music_unk1 == 0xf1)
     music_control = m & 0xf;
+  Overworld_FinishInstantSpriteGfxUpload();
   Overworld_OperateCameraScroll();
   Sprite_ReloadAll_Overworld();
   num_memorized_tiles = 0;
   Overworld_RebuildScreenForInstantTransition();
+}
+
+static void Overworld_FinishInstantSpriteGfxUpload() {
+  if (incremental_counter_for_vram == 16)
+    return;
+
+  /* The normal scroll path spends 16 frames uploading WRAM 0x10000..0x11FFF
+   * into sprite VRAM 0x5000..0x5FFF. Instant widescreen transitions skip
+   * those frames, so finish the same upload before sprites become visible. */
+  memcpy(&g_zenv.vram[0x5000], &g_ram[0x10000], 0x2000);
+  incremental_counter_for_vram = 16;
+  nmi_update_tilemap_dst = 0;
+  nmi_update_tilemap_src = 0;
 }
 
 /* Rebuild the full destination BG map after an instant transition.  The

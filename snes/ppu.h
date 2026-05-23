@@ -169,6 +169,7 @@ struct Ppu {
   uint8_t lastMosaicModulo;   // Cached mosaic LUT version (rebuild on mosaic size change)
   uint8_t renderFlags;     // Active render feature flags (see kPpuRenderFlags_*)
   bool renderWideHud;      // Draw BG3 HUD over the full widescreen viewport
+  bool anchorWideHudBg3;   // Apply BG3 HUD anchoring only while the legacy gameplay strip is active
   const uint16_t *wideHudTilemap; // 64-column widescreen HUD tilemap supplied by the game layer
   uint8_t wideHudShadowSize; // Pixel width of the bottom/right HUD shadow
   uint32_t renderPitch;    // Byte stride between rows in the output renderBuffer
@@ -288,6 +289,6 @@ int PpuGetCurrentRenderScale(Ppu *ppu, uint32_t render_flags);
 void PpuSetMode7PerspectiveCorrection(Ppu *ppu, int low, int high);
 // Configure extra pixels rendered beyond the standard 256×224 area.
 void PpuSetExtraSideSpace(Ppu *ppu, int left, int right, int bottom);
-void PpuSetRenderWideHud(Ppu *ppu, bool enabled, const uint16_t *tilemap, uint8_t shadow_size);
+void PpuSetRenderWideHud(Ppu *ppu, bool enabled, bool anchor_bg3, const uint16_t *tilemap, uint8_t shadow_size);
 
 #endif  // ZELDA3_SNES_PPU_H_
