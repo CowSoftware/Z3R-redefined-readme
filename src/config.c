@@ -207,7 +207,7 @@ static int KeyMapHash_Find(uint16 key) {
  * modifier bitmask when they are the primary key pressed, so pressing
  * bare Shift doesn't match "Shift+X" bindings.
  */
-int FindCmdForSdlKey(SDL_Keycode code, SDL_Keymod mod) {
+int FindCmdForSdlKey(int code, int mod) {
   // Reject keycodes outside the representable 10-bit range
   if (code & ~(SDLK_SCANCODE_MASK | 0x1ff))
     return 0;

@@ -19,7 +19,6 @@
  */
 #pragma once
 #include "types.h"
-#include <SDL_keycode.h>
 
 /*
  * Key command IDs — abstract game actions mapped to integer indices.
@@ -224,7 +223,7 @@ void ParseConfigFile(const char *filename);
 /* FindCmdForSdlKey — Translates an SDL keycode + modifier state into
  * a kKeys_* command ID via hash table lookup. Returns 0 if the key
  * combination is not bound to any command. */
-int FindCmdForSdlKey(SDL_Keycode code, SDL_Keymod mod);
+int FindCmdForSdlKey(int code, int mod);
 
 /* FindCmdForGamepadButton — Translates a gamepad button + held-button
  * modifier bitmask into a kKeys_* command ID. Searches the per-button

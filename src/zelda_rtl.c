@@ -184,6 +184,23 @@ static bool Zelda_ShouldRenderWideHudOverlay() {
   return false;
 }
 
+/* Return true when the active gameplay module is drawing the normal BG3 HUD as
+ * screen-space UI. The HUD should stay anchored to the rendered viewport even
+ * when BG1/BG2 gain asymmetric widescreen side-space near world bounds. */
+static bool Zelda_IsGameplayHudBg3ScreenSpace() {
+  return overworld_map_state == 0 &&
+      (main_module_index == 7 || main_module_index == 8 || main_module_index == 9 ||
+       main_module_index == 15);
+}
+
+/* Return true for module 0x0e BG3 menus whose tilemaps are viewport overlays,
+ * not world layers. These menus should open from the same centered origin
+ * regardless of Link's current camera-side position. */
+static bool Zelda_IsInterfaceBg3ScreenSpace() {
+  return main_module_index == 14 &&
+      (submodule_index == 1 || submodule_index == 11 || submodule_index == 12);
+}
+
 /*
  * kUpperBitmasks — 16 single-bit masks ordered from MSB (0x8000) down to LSB
  * (0x0001). Indexed by a bit position to produce a one-hot uint16 without
@@ -525,11 +542,9 @@ void ZeldaDrawPpuFrame(uint8 *pixel_buffer, size_t pitch, uint32 render_flags) {
       Zelda_ShouldRenderWideHudOverlay();
 
   bool anchor_wide_hud_bg3 =
-      render_wide_hud && main_module_index != 14 ||
-      (enhanced_features0 & (kFeatures0_ExtendScreen64 | kFeatures0_RearrangeHud)) ==
-          (kFeatures0_ExtendScreen64 | kFeatures0_RearrangeHud) &&
+      (enhanced_features0 & kFeatures0_ExtendScreen64) &&
       g_config.extended_aspect_ratio != 0 &&
-      main_module_index == 14 && (submodule_index == 1 || submodule_index == 12);
+      (Zelda_IsGameplayHudBg3ScreenSpace() || Zelda_IsInterfaceBg3ScreenSpace());
   PpuSetRenderWideHud(g_zenv.ppu, render_wide_hud, anchor_wide_hud_bg3, Hud_GetWideHudTilemap(),
                       render_wide_hud ? g_config.hud_shadow_size : 0);
   PpuBeginDrawing(g_zenv.ppu, pixel_buffer, pitch, render_flags);
@@ -676,7 +691,7 @@ static void ZeldaRunGameLoop() {
  */
 void ZeldaInitialize() {
   g_zenv.dma = dma_init(NULL);
-  g_zenv.ppu = ppu_init();
+  g_zenv.ppu = ppu_init(NULL);
   g_zenv.ram = g_ram;
   g_zenv.sram = (uint8*)calloc(8192, 1);
   g_zenv.vram = g_zenv.ppu->vram;

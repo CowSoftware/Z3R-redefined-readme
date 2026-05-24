@@ -252,6 +252,13 @@ static bool Overworld_ShouldUseOpenWorldTransitions() {
   return (enhanced_features0 & (kFeatures0_ExtendScreen64 | kFeatures0_WidescreenVisualFixes)) != 0;
 }
 
+/* Return true only for edge-scroll routes that can safely skip their visible
+ * scroll frames. Mosaic routes must keep their fade-back submodules because
+ * they force-blank the display before loading the destination area. */
+static bool Overworld_ShouldFinishScrollTransitionInstantly() {
+  return Overworld_ShouldUseOpenWorldTransitions() && submodule_index != 18;
+}
+
 static void Overworld_FinishScrollTransitionInstantly();
 static void Overworld_FinishInstantSpriteGfxUpload();
 static void Overworld_RebuildScreenForInstantTransition();
@@ -1275,7 +1282,7 @@ void Module09_LoadNewSprites() {  // 82abed
   num_memorized_tiles = 0;
   if (sram_progress_indicator >= 2 && submodule_index != 18)
     Overworld_SetFixedColAndScroll();
-  if (Overworld_ShouldUseOpenWorldTransitions()) {
+  if (Overworld_ShouldFinishScrollTransitionInstantly()) {
     Overworld_FinishScrollTransitionInstantly();
     return;
   }
