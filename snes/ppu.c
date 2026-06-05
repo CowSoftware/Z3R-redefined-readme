@@ -180,7 +180,7 @@ enum {
  * extraLeftRight (the widescreen pixel count) is initialised so it is
  * stable across resets.
  */
-Ppu* ppu_init() {
+Ppu* ppu_init(void) {
   Ppu* ppu = (Ppu * )malloc(sizeof(Ppu));
   ppu->extraLeftRight = kPpuExtraLeftRight;
   return ppu;

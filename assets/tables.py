@@ -71,7 +71,7 @@ def invert_dict(xs):
 # Each line in the multiline string is one object; its line number (0-based)
 # is its index within the subtype.
 # -----------------------------------------------------------------------------
-type0_names="""Ceiling [L-R]
+type0_names=r"""Ceiling [L-R]
 [N]Wall Horz: [L-R]
 [S]Wall Horz: [L-R]
 [N]Wall Horz: (LOW) [L-R]

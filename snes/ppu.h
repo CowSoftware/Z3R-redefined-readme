@@ -264,7 +264,7 @@ struct Ppu {
  * touches one of the $21xx PPU registers.
  */
 // Allocate and return a new PPU with zeroed state.
-Ppu* ppu_init();
+Ppu* ppu_init(void);
 // Free the PPU and its allocated memory.
 void ppu_free(Ppu* ppu);
 // Reset all PPU registers and state to power-on defaults.

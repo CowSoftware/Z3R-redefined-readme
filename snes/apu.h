@@ -76,7 +76,7 @@ typedef struct Apu2 {
 } Apu2;
 
 // Allocate and return a new APU with SPC700 and DSP sub-processors.
-Apu* apu_init();
+Apu* apu_init(void);
 void apu_free(Apu* apu);
 // Reset APU to power-on state: clear RAM, reset SPC700/DSP, enable boot ROM.
 void apu_reset(Apu* apu);

@@ -339,13 +339,11 @@ static void OpenGLRenderer_BeginDraw(int width, int height, uint8 **pixels, int 
  */
 static void OpenGLRenderer_EndDraw(int crop_left, int crop_width) {
   int drawable_width, drawable_height;
-  if (crop_left != 0 || crop_width != g_draw_width) {
-    for (int y = 0; y < g_draw_height; y++) {
-      uint8 *row = g_screen_buffer + y * g_draw_width * 4;
-      memmove(row, row + crop_left * 4, crop_width * 4);
-    }
-    g_draw_width = crop_width;
-  }
+  int source_width = g_draw_width;
+  int texture_width = crop_width;
+  uint8 *texture_pixels = g_screen_buffer + crop_left * 4;
+  bool cropped_upload = (crop_left != 0 || texture_width != source_width);
+  GLenum texture_upload_type = g_opengl_es ? GL_UNSIGNED_BYTE : GL_UNSIGNED_INT_8_8_8_8_REV;
 
   // Query the actual pixel dimensions (may differ from window size on HiDPI displays)
   SDL_GL_GetDrawableSize(g_window, &drawable_width, &drawable_height);
@@ -358,41 +356,41 @@ static void OpenGLRenderer_EndDraw(int crop_left, int crop_width) {
    * then the viewport is too wide (pillarbox), otherwise too tall (letterbox).
    */
   if (!g_config.ignore_aspect_ratio) {
-    if (viewport_width * g_draw_height < viewport_height * g_draw_width)
-      viewport_height = viewport_width * g_draw_height / g_draw_width;  // limit height
+    if (viewport_width * g_draw_height < viewport_height * texture_width)
+      viewport_height = viewport_width * g_draw_height / texture_width;  // limit height
     else
-      viewport_width = viewport_height * g_draw_width / g_draw_height;  // limit width
+      viewport_width = viewport_height * texture_width / g_draw_height;  // limit width
   }
 
   // Center the viewport within the drawable area; black bars fill the remainder
   int viewport_x = (drawable_width - viewport_width) >> 1;
-  // Note: (viewport_height - viewport_height) >> 1 always yields 0; vertical
-  // centering is effectively handled by the drawable height matching
-  int viewport_y = (viewport_height - viewport_height) >> 1;
+  int viewport_y = (drawable_height - viewport_height) >> 1;
 
   glBindTexture(GL_TEXTURE_2D, g_texture.gl_texture);
-  if (g_draw_width == g_texture.width && g_draw_height == g_texture.height) {
+  if (cropped_upload)
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, source_width);
+
+  if (texture_width == g_texture.width && g_draw_height == g_texture.height) {
     /*
      * Fast path: texture dimensions unchanged, so use glTexSubImage2D to update
      * pixel data in-place without reallocating GPU memory. Desktop GL uses
      * GL_UNSIGNED_INT_8_8_8_8_REV for native BGRA byte order; ES uses GL_UNSIGNED_BYTE.
      */
-    if (!g_opengl_es)
-      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, g_draw_width, g_draw_height, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, g_screen_buffer);
-    else
-      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, g_draw_width, g_draw_height, GL_BGRA, GL_UNSIGNED_BYTE, g_screen_buffer);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture_width, g_draw_height,
+                    GL_BGRA, texture_upload_type, texture_pixels);
   } else {
     /*
      * Slow path: frame dimensions changed (e.g., hi-res mode toggle), so
      * reallocate the GPU texture with glTexImage2D and cache the new size.
      */
-    g_texture.width = g_draw_width;
+    g_texture.width = texture_width;
     g_texture.height = g_draw_height;
-    if (!g_opengl_es)
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, g_draw_width, g_draw_height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, g_screen_buffer);
-    else
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, g_draw_width, g_draw_height, 0, GL_BGRA, GL_UNSIGNED_BYTE, g_screen_buffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_width, g_draw_height, 0,
+                 GL_BGRA, texture_upload_type, texture_pixels);
   }
+
+  if (cropped_upload)
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
   // Clear to black so letterbox/pillarbox bars are black, not garbage
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

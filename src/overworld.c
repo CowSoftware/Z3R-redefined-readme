@@ -253,6 +253,22 @@ static bool Overworld_ShouldUseOpenWorldTransitions() {
   return (enhanced_features0 & (kFeatures0_ExtendScreen64 | kFeatures0_WidescreenVisualFixes)) != 0;
 }
 
+/* Resolve the ambient loop for an overworld screen. During Zelda's rescue
+ * phase, normal light-world screens must keep heavy rain until Sanctuary sets
+ * sram_progress_indicator to 2. */
+static uint8 Overworld_GetScreenAmbientSfx(uint8 screen) {
+  if (screen < 0x40 && sram_progress_indicator < 2)
+    return 1;
+  return overworld_music[screen] >> 4;
+}
+
+/* Return an ambient command that also stops any previous loop when a destination
+ * has no ambient sound of its own. */
+static uint8 Overworld_GetScreenAmbientSfxOrStop(uint8 screen) {
+  uint8 ambient = Overworld_GetScreenAmbientSfx(screen);
+  return ambient ? ambient : 5;
+}
+
 static void Overworld_FinishScrollTransitionInstantly();
 static void Overworld_FinishInstantSpriteGfxUpload();
 static void Overworld_ApplyPendingOWScrollUpload();
@@ -600,7 +616,7 @@ setsong:
   Sprite_ReloadAll_Overworld();
   if (!(overworld_screen_index & 0x40))
     Sprite_InitializeMirrorPortal();
-  sound_effect_ambient = sram_progress_indicator < 2 ? 1 : 5;
+  sound_effect_ambient = Overworld_GetScreenAmbientSfxOrStop(BYTE(overworld_screen_index));
   if (follower_indicator == 6)
     follower_indicator = 0;
 
@@ -1122,8 +1138,7 @@ after:
   BYTE(overworld_area_index) = new_area;
   if (!savegame_is_darkworld || link_item_moon_pearl) {
     uint8 music = overworld_music[new_area];
-    if ((music & 0xf0) == 0)
-      sound_effect_ambient = 5;
+    sound_effect_ambient = Overworld_GetScreenAmbientSfxOrStop(new_area);
     if (!ZeldaIsPlayingMusicTrack(music & 0xf))
       music_control = 0xf1;
   }
@@ -1400,12 +1415,14 @@ static void Overworld_FinishScrollTransitionInstantly() {
 
   submodule_index = 0;
   uint8 m = overworld_music[BYTE(overworld_screen_index)];
-  sound_effect_ambient = m >> 4;
+  sound_effect_ambient = Overworld_GetScreenAmbientSfx(BYTE(overworld_screen_index));
   if (music_unk1 == 0xf1)
     music_control = m & 0xf;
   Overworld_FinishInstantSpriteGfxUpload();
   Overworld_OperateCameraScroll();
-  Overworld_SetFixedColAndScroll();
+  /* Before Sanctuary, TS_copy carries the rain overlay; this refresh can clear it. */
+  if (sram_progress_indicator >= 2)
+    Overworld_SetFixedColAndScroll();
   Sprite_ReloadAll_Overworld();
   num_memorized_tiles = 0;
   Overworld_RebuildScreenForInstantTransition();
@@ -1922,7 +1939,7 @@ void Module09_FadeBackInFromMosaic() {  // 82b0d2
     last_music_control = music_unk1;
     if (BYTE(overworld_screen_index) != 0x80 && BYTE(overworld_screen_index) != 0x2a) {
       uint8 m = overworld_music[BYTE(overworld_screen_index)];
-      sound_effect_ambient = (m >> 4) ? (m >> 4) : 5;
+      sound_effect_ambient = Overworld_GetScreenAmbientSfxOrStop(BYTE(overworld_screen_index));
       if (!ZeldaIsPlayingMusicTrack(m & 0xf))
         music_control = (m & 0xf);
     }
@@ -2086,7 +2103,7 @@ void MirrorWarp_FinalizeAndLoadDestination() {  // 82b260
   HDMAEN_copy = 0x80;
   uint8 m = overworld_music[BYTE(overworld_screen_index)];
   music_control = m & 0xf;
-  sound_effect_ambient = m >> 4;
+  sound_effect_ambient = Overworld_GetScreenAmbientSfx(BYTE(overworld_screen_index));
   if (BYTE(overworld_screen_index) >= 0x40 && !link_item_moon_pearl)
     music_control = 4;
 
@@ -2290,7 +2307,7 @@ void Module09_2E_Whirlpool() {  // 82b40f
     countdown_for_blink = 144;
     ReloadPreviouslyLoadedSheets();
     HDMAEN_copy = 0x80;
-    sound_effect_ambient = overworld_music[BYTE(overworld_screen_index)] >> 4;
+    sound_effect_ambient = Overworld_GetScreenAmbientSfx(BYTE(overworld_screen_index));
     music_control = savegame_is_darkworld ? 9 : 2;
     submodule_index = 0;
     subsubmodule_index = 0;
@@ -2615,7 +2632,7 @@ void Overworld_FinalizeEntryOntoScreen() {  // 82c242
     submodule_index = 0;
     subsubmodule_index = 0;
     uint8 m = overworld_music[BYTE(overworld_screen_index)];
-    sound_effect_ambient = m >> 4;
+    sound_effect_ambient = Overworld_GetScreenAmbientSfx(BYTE(overworld_screen_index));
     if (music_unk1 == 0xf1)
       music_control = m & 0xf;
     finished = true;
