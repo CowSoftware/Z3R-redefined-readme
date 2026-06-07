@@ -8,6 +8,8 @@ Old Readme from the SNESREV repo is available [here](https://github.com/CowSoftw
 
 Builds still compile and run properly, for more information on building instructions and FAQs, refer to [this wiki](https://github.com/snesrev/zelda3/wiki)
 
+Some features might be broken, you can check the [beta builds](https://github.com/xander-haj/Z3R-Beta) if you have issues with the stable builds.
+
 ## Current changes    
       
 - Fixed windscreen mode.
