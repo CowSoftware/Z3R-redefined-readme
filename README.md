@@ -6,6 +6,10 @@ Tested and still builds acording to the wiki: https://github.com/snesrev/zelda3/
 
 Original snesrev repo that has been fully commented, refer to the [base](https://github.com/xander-haj/z3c) for this new repo.
 
+Old Readme from the SNESREV repo is available [here](https://github.com/CowSoftware/Z3R-redefined-readme/blob/main/OLD_README.md)
+
+For building instructions and, refer to [this wiki](https://github.com/snesrev/zelda3/wiki)
+
 ## Current changes    
       
 - Fixed windscreen mode.
