@@ -1,4 +1,4 @@
-## This is maintenance branch of the Zelda3 PC Port by [SNESREV](https://github.com/snesrev/zelda3)
+## This is maintenance branch of the [Zelda3 PC Port by SNESREV](https://github.com/snesrev/zelda3)
 
 The original project was abounded by the developer ever since so this branch is an attempt to add unfinsished changes and continue the project.
 
@@ -18,7 +18,7 @@ Some features might be broken, you can check the [beta builds](https://github.co
 
 - Y,X,L,R Buttons now have individual Item Boxes in the HUD with button labels applied.
 
-- New in-game settings menu, allows anything, except for aspect ratio, to be modified in real time, aspect ratio changes still require restart for now.
+- New in-game settings menu (Press Q on your keyboard to bring it up), allows anything, except for aspect ratio, to be modified in real time, aspect ratio changes still require restart for now.
 
 ## Compromises
 
