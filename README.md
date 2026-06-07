@@ -2,13 +2,11 @@
 
 The original project was abounded by the developer ever since so this branch is an attempt to add unfinsished changes and continue the project.
 
-Tested and still builds acording to the wiki: https://github.com/snesrev/zelda3/wiki    
-
 Original snesrev repo that has been fully commented, refer to the [base](https://github.com/xander-haj/z3c) for this new repo.
 
 Old Readme from the SNESREV repo is available [here](https://github.com/CowSoftware/Z3R-redefined-readme/blob/main/OLD_README.md)
 
-For building instructions and, refer to [this wiki](https://github.com/snesrev/zelda3/wiki)
+Builds still compile and run properly, for more information on building instructions and FAQs, refer to [this wiki](https://github.com/snesrev/zelda3/wiki)
 
 ## Current changes    
       
